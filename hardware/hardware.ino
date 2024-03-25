@@ -61,7 +61,7 @@ static const char* subtopic[]    = {"620151149_sub","/elet2415"};  // Array of T
 const char *ssid = "MonaConnect";
 const char *password = "";
 
-static const char *mqtt_server = "dbs.msjrealtms.com";       // Broker IP address or Domain name as a String
+static const char *mqtt_server = "test.mosquitto.org";       // Broker IP address or Domain name as a String
 static uint16_t mqtt_port = 1883;
 
 
@@ -88,7 +88,6 @@ void setup() {
     Serial.println("\nConnected to the WiFi network");
     Serial.print("Local ESP32 IP: ");
     Serial.println(WiFi.localIP());
-    
 
     if (WiFi.isConnected()) {
         Serial.println("Connected to wifi network");
@@ -108,8 +107,9 @@ void setup() {
 
 
   client.setServer(mqtt_server, mqtt_port);
-  while(!client.connect("demo")){
-  Serial.println("connected to client");
+    while(!client.connect("demo")){
+    Serial.println("Connecting to Server...");
+        delay(5000);
   }
 }
  

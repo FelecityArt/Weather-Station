@@ -81,28 +81,28 @@ onMounted(() => {
     Mqtt.connect(); // Connect to Broker located on the backend
     setTimeout(() => {
         // Subscribe to each topic
-        Mqtt.subscribe("620151149");
-        Mqtt.subscribe("620151149_sub");
+        // Mqtt.subscribe("620151149");
+        // Mqtt.subscribe("620151149_sub");
     }, 3000);
 });
 
 onBeforeUnmount(() => {
     // THIS FUNCTION IS CALLED RIGHT BEFORE THIS COMPONENT IS UNMOUNTED
-    Mqtt.unsubcribeAll();
+    // Mqtt.unsubcribeAll();
 });
 
 const CreateCharts = async () => {
     // LINE CHART FOR RESERVE VARIABLE
     lineChart.value = Highcharts.chart("container0", {
         chart: { zoomType: "x" },
-        title: { text: "Water Management Analysis", align: "left" },
+        title: { text: "Soil Moisture Analysis", align: "left" },
         yAxis: {
-            title: { text: "Water Reserve", style: { color: "#000000" } },
-            labels: { format: "{value} Gal" },
+            title: { text: "Soil Moisture Content", style: { color: "#000000" } },
+            labels: { format: "{value} Percentage" },
         },
     
         tooltip: {
-            pointFormat: "Time: {point.x} s <br/> Water Reserve: {point.y} Gal",
+            pointFormat: "Time: {point.x} s <br/> Soil Moisture Content: {point.y} Percentage",
         },
         
         xAxis: {
@@ -113,7 +113,7 @@ const CreateCharts = async () => {
         tooltip: { shared: true },
         series: [
             {
-                name: "Water Reserve",
+                name: "Moisture",
                 type: "line",
                 data: [],
                 turboThreshold: 0,
@@ -122,35 +122,6 @@ const CreateCharts = async () => {
         ],
     });
   
-    scatterChart.value = Highcharts.chart("container1", {
-        chart: { zoomType: "x" },
-        title: { text: "Height Level and Water Level Correlation Analysis", align: "left" },
-        yAxis: {
-            title: {
-                text: "Height",
-                style: { color: "#000000" },
-            },
-            labels: { format: "{value} in" },
-        },
-  
-        xAxis: {
-            title: { text: "Water Height", style: { color: "#000000" } },
-            labels: { format: "{value} in" },
-        },
-        tooltip: {
-            shared: true,
-            pointFormat: "Water Height: {point.x} in <br/> Height: {point.y} in",
-        },
-        series: [
-            {
-                name: "Analysis",
-                type: "scatter",
-                data: [],
-                turboThreshold: 0,
-                color: Highcharts.getOptions().colors[0],
-            },
-        ],
-        });
 };
   
 // FUNCTIONS

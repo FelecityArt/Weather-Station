@@ -18,6 +18,11 @@ def on_message(client, userdata, msg):
         # Parse the JSON data
         data = json.loads(msg.payload)
 
+        # Check if data is a dictionary
+        if not isinstance(data, dict):
+            print(f"Unexpected JSON format: {msg.payload}")
+            return
+
         # Add a timestamp to the data
         data['timestamp'] = int(datetime.now().timestamp())
 
@@ -29,6 +34,7 @@ def on_message(client, userdata, msg):
         print("\n")
     except json.JSONDecodeError:
         print(f"Could not parse JSON: {msg.payload}")
+
 
 # Create an MQTT client and attach our routines to it.
 client = mqtt.Client(client_id="620151149")

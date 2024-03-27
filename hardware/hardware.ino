@@ -61,7 +61,7 @@ static const char* subtopic[]    = {"620151149_sub","/elet2415"};  // Array of T
 const char *ssid = "MonaConnect";
 const char *password = "";
 
-static const char *mqtt_server = "test.mosquitto.org";       // Broker IP address or Domain name as a String
+static const char *mqtt_server = "broker.emqx.io";       // Broker IP address or Domain name as a String
 static uint16_t mqtt_port = 1883;
 
 
@@ -244,12 +244,12 @@ float calculateHeatIndex(float t, float h)
 
   String JsonDoc(float t, float h, float p, float a, int soil, float hi){
     JsonDocument doc;
-    doc["Temperature"] = ceil(t * 100.0)/100.0;
-    doc["Humidity"] = ceil(h * 100.0)/100.0;
-    doc["Pressure"] = ceil(p * 100.0)/100.0;
-    doc["Altitude"] = ceil(a * 100.0)/100.0;
-    doc["Soil"] = ceil(soil * 100.0)/100.0;
-    doc["Heat Index"] = ceil(hi * 100.0)/100.0;
+    doc["temperature"] = ceil(t * 100.0)/100.0;
+    doc["humidity"] = ceil(h * 100.0)/100.0;
+    doc["pressure"] = ceil(p * 100.0)/100.0;
+    doc["altitude"] = ceil(a * 100.0)/100.0;
+    doc["soil"] = ceil(soil * 100.0)/100.0;
+    doc["heatindex"] = ceil(hi * 100.0)/100.0;
     String output;
     serializeJson(doc, output);
     return output;

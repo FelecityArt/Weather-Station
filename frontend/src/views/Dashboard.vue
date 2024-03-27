@@ -10,7 +10,7 @@
                             Mona, Kingston
                             </v-card-text>
                             <v-sheet>
-                            <v-slider class="altitude-img" direction="vertical" v-model="radar" :max="2256" :min="0" step="1" thumb-label="always" color="white" label="Altitude (m)" track-size="60"></v-slider>
+                            <v-slider class="altitude-img" direction="vertical" v-model="altitude" :max="1000" :min="0" step="1" thumb-label="always" color="white" label="Altitude (m)" track-size="60"></v-slider>
                             </v-sheet>
                         </v-card>
                     </v-col>
@@ -21,7 +21,7 @@
                             <v-icon left>mdi-thermometer</v-icon>
                             Temperature
                             <v-spacer></v-spacer>
-                            <div class="display-1">30°C</div>
+                            <div class="display-1" v-text="`${temperature}°C`"></div>
                         </v-card-text>
                     </v-card>
                 </v-col>
@@ -32,7 +32,7 @@
                             <v-icon left>mdi-thermometer-alert</v-icon>
                             Heat Index
                             <v-spacer></v-spacer>
-                            <div class="display-2">35°C</div>
+                            <div class="display-2" v-text="`${heatindex}°C`"></div>
                         </v-card-text>
                     </v-card>
                 </v-col>
@@ -43,7 +43,7 @@
                             <v-icon left>mdi-water-percent</v-icon>
                             Humidity
                             <v-spacer></v-spacer>
-                            <div class="display-3">70%</div>
+                            <div class="display-3" v-text="`${humidity}`"></div>
                         </v-card-text>
                     </v-card>
                 </v-col>
@@ -63,7 +63,7 @@
             <!-- col 2 -->
             <v-col cols="4">
                 <v-sheet max-width="350px">
-                    <v-card class="mb-5" style="max-width: 350px" variant="outlined" color="primary" density="compact" rounded="lg" title="Water Level" subtitle="Capacity Remaining">
+                    <v-card class="mb-5" style="max-width: 350px" variant="outlined" color="primary" density="compact" rounded="lg" title="Soil Moisture" subtitle="Capacity Remaining">
                         <div id="container2"></div>
                     </v-card>
                 </v-sheet>
@@ -107,13 +107,22 @@ import { useRoute, useRouter } from "vue-router";
 const router        = useRouter();
 const route         = useRoute();
 const areaGraph     = ref(null);    // areaGraph object
-const gauge         = ref(null);    // gauge object
+const altitude      = ref(0);
+const pressureGauge = ref(null); 
+const temperature   = ref(null);
 const percentage    = ref(null);
 const points        = ref(600);
 const shift         = ref(false);
+const soil          = ref(null);
+const heatindex     = ref(null);
+const humidity      = ref(null);
 var isActive        = ref(null);
 var radar           = ref(null);
 var fm              = new FluidMeter();
+
+defineExpose({
+  altitude
+});
 
 onMounted(() => {
     // THIS FUNCTION IS CALLED AFTER THIS COMPONENT HAS BEEN MOUNTED
@@ -122,35 +131,87 @@ onMounted(() => {
     Mqtt.connect();
     setTimeout(() => {
         // Subscribe to each topic
-        Mqtt.subscribe("620151149");
-        Mqtt.subscribe("620151149_sub");
+        // Mqtt.subscribe("620151149");
+        // Mqtt.subscribe("620151149_sub");
     }, 3000);
 });
   
 onBeforeUnmount(() => {
     // THIS FUNCTION IS CALLED RIGHT BEFORE THIS COMPONENT IS UNMOUNTED
-    Mqtt.unsubcribeAll();
+    // Mqtt.unsubcribeAll();
 });
 
 
+
 // WATCHERS
-watch(payload, (data) => {
-    fm.setPercentage(data.percentage);
-    radar.value = data.radar;
-    if (data.percentage > 100) {
-      isActive.value = true;
-    } else {
-      isActive.value = false;
-    }
-    console.log(data.percentage);
+watch(Mqtt.newCardData, (data) => {
+    console.log(Mqtt.newCardData.value.temperature, data.timestamp);
     if (points.value > 0) {
-      points.value--;
+        points.value--;
     } else {
-      shift.value = true;
+        shift.value = true;
     }
-    
-    areaGraph.value.series[0].addPoint({y:parseFloat(data.reserve.toFixed(2)), x: data.timestamp * 1000 }, true, shift.value);
-    gauge.value.series[0].points[0].update(parseFloat(data.reserve));
+
+
+    const currentTime = new Date().getTime();
+
+    console.log(Mqtt.newCardData.value.pressure);
+    const pressure = parseFloat(Mqtt.newCardData.value.pressure);
+
+    // Check if the value is a number before updating the gauge
+    if (!isNaN(pressure)) {
+        pressureGauge.value.series[0].setData([pressure], true);
+    }
+
+
+    console.log(Mqtt.newCardData.value.altitude);
+    let altitudeValue = parseFloat(Mqtt.newCardData.value.altitude);
+
+    // Check if the value is a number before updating the altitude
+    if (!isNaN(altitudeValue)) {
+        altitude.value = altitudeValue;
+        console.log('Updated altitude:', altitude.value);
+    }
+
+
+    console.log(Mqtt.newCardData.value.heatindex);
+    let heatIndexValue = parseFloat(Mqtt.newCardData.value.heatindex);
+    // Check if the value is a number before updating the heat index
+    if (!isNaN(heatIndexValue)) {
+        heatindex.value = heatIndexValue;
+        console.log('Updated heat index:', heatindex.value);
+    }
+
+
+    console.log(Mqtt.newCardData.value.humidity);
+    let humidityValue = parseFloat(Mqtt.newCardData.value.humidity);
+    // Check if the value is a number before updating the humidity
+    if (!isNaN(humidityValue)) {
+        humidity.value = humidityValue;
+        console.log('Updated humidity:', humidity.value);
+    }
+
+
+    console.log(Mqtt.newCardData.value.temperature);
+    let temperatureValue = parseFloat(Mqtt.newCardData.value.temperature);
+    // Check if the value is a number before updating the temperature
+    if (!isNaN(temperatureValue)) {
+        temperature.value = temperatureValue;
+        console.log('Updated temperature:', temperature.value);
+    }
+
+
+    console.log(Mqtt.newCardData.value.soil);
+    let soilValue = parseFloat(Mqtt.newCardData.value.soil);
+    // Check if the value is a number before updating the soil
+    if (!isNaN(soilValue)) {
+        // Calculate the soil moisture percentage
+        let soilPercentage = 100 - ((soilValue / 4095.0) * 100.0);
+        soil.value = soilPercentage;
+        console.log('Updated soil:', soil.value);
+        // Update the fillPercentage property of the FluidMeter object
+        fm.setPercentage(soil.value);
+    }
 });
 
 // FUNCTIONS
@@ -158,11 +219,11 @@ const CreateCharts = async () => {
     
 
     // GAUGE GRAPH FOR RESERVE VARIABLE:
-    gauge.value = Highcharts.chart("container1", {
-        title: { text: "Water Reserves", align: "left" },
+    pressureGauge.value = Highcharts.chart("container1", {
+        title: { text: "Pressure", align: "left" },
         yAxis: { 
             min: 0,
-            max: 1000,
+            max: 100000,
             tickPixelInterval: 72,
             tickPosition: "inside",
             tickColor: Highcharts.defaultOptions.chart.backgroundColor || "#FFFFFF",
@@ -172,9 +233,9 @@ const CreateCharts = async () => {
             labels: { distance: 20, style: { fontSize: "14px" } },
             lineWidth: 0,
             plotBands: [
-                { from: 0, to: 200, color: "#DF5353", thickness: 20 },
-                { from: 200, to: 600, color: "#DDDF0D", thickness: 20 },
-                { from: 600, to: 1000, color: "#55BF3B", thickness: 20 },
+                { from: 0, to: 20000, color: "#DF5353", thickness: 20 },
+                { from: 20000, to: 60000, color: "#DDDF0D", thickness: 20 },
+                { from: 60000, to: 100000, color: "#55BF3B", thickness: 20 },
             ],
         },
         tooltip: { shared: true },
@@ -188,11 +249,11 @@ const CreateCharts = async () => {
         series: [
             {
                 type: "gauge",
-                name: "Water Capacity",
+                name: "Pressure",
                 data: [0],
-                tooltip: { valueSuffix: " Gal" },
+                tooltip: { valueSuffix: " Pa" },
                 dataLabels: {
-                    format: "{y} Gal",
+                    format: "{y} Pa",
                     borderWidth: 0,
                     color: (Highcharts.defaultOptions.title && Highcharts.defaultOptions.title.style && Highcharts.defaultOptions.title.style.color) || "#333333",
                     style: { fontSize: "16px" },
@@ -204,14 +265,14 @@ const CreateCharts = async () => {
                     baseLength: "0%",
                     rearLength: "0%",
                 },
-                pivot: { backgroundColor: "gray", radius: 6 },
+                pivot: { backgroundColor: "black", radius: 6 },
             },
         ],
     });
 
     fm.init({
         targetContainer: document.getElementById("container2"),
-        fillPercentage: percentage,
+        fillPercentage: soil.value,
         options: {
             fontSize: "70px",
             fontFamily: "Arial",
@@ -222,7 +283,7 @@ const CreateCharts = async () => {
             drawBubbles: true,
             size: 300,
             borderWidth: 25,
-            backgroundColor: "#e2e2e2",
+            backgroundColor: "#A2D9CE",
             foregroundColor: "#fafafa",
             foregroundFluidLayer: {
                 fillStyle: "purple",
@@ -242,7 +303,8 @@ const CreateCharts = async () => {
     });
 };
 </script>
-  
+
+
 <style scoped>
 /** CSS STYLE HERE */
 figure {

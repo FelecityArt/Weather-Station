@@ -1,6 +1,6 @@
 <template>
   
-  <VContainer class="fill-height ">
+  <VContainer class="fill-height weather-img">
     <VResponsive class="align-center text-center fill-height">
       <VImg height="350" class="mb-5" src="@/assets/logo.svg" />
 
@@ -80,3 +80,11 @@ onBeforeUnmount(()=>{
   
 });
 </script>
+<style scoped>
+
+.weather-img {
+    background: url('../assets/weather.jpg');
+    background-size: cover;
+}
+
+</style>

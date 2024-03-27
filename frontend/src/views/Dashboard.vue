@@ -3,17 +3,20 @@
         <v-container class="values">
             <v-row class="rounded-border fill-height">
                 <!-- col 1 -->
-                    <v-col justify="center" cols="3">
-                        <v-card class="mb-5 altitude outlined altitude-img">
-                            <v-card-text class="text-center">
-                            <v-icon left>mdi-map-marker</v-icon>
-                            Mona, Kingston
-                            </v-card-text>
-                            <v-sheet>
-                            <v-slider class="altitude-img" direction="vertical" v-model="altitude" :max="1000" :min="0" step="1" thumb-label="always" color="white" label="Altitude (m)" track-size="60"></v-slider>
-                            </v-sheet>
-                        </v-card>
-                    </v-col>
+                <v-col justify="center" cols="3">
+                    <v-card class="mb-5 altitude outlined altitude-img">
+                    <v-card-text class="text-center">
+                        <v-icon left>mdi-map-marker</v-icon>
+                        Mona, Kingston
+                    </v-card-text>
+                    <v-sheet>
+                        <v-slider class="altitude-img" direction="vertical" v-model="altitude" :max="altitudeUnit === 'm' ? 1000 : 3280" :min="0" step="1" thumb-label="always" color="white" :label="`Altitude (${altitudeUnit})`" track-size="60"></v-slider>
+                    </v-sheet>
+                    <v-card-actions class="no-background">
+                        <v-btn color="primary" class="button" theme="dark" @click="convert">Convert</v-btn>
+                    </v-card-actions>
+                    </v-card>
+                </v-col>
 
                 <v-col justify="center" cols="3">
                     <v-card class="mb-5 temperature temperature-img" outlined>
@@ -43,7 +46,7 @@
                             <v-icon left>mdi-water-percent</v-icon>
                             Humidity
                             <v-spacer></v-spacer>
-                            <div class="display-3" v-text="`${humidity}`"></div>
+                            <div class="display-3" v-text="`${humidity}%`"></div>
                         </v-card-text>
                     </v-card>
                 </v-col>
@@ -89,19 +92,19 @@
 // IMPORTS
 import { useMqttStore } from "@/store/mqttStore"; // Import Mqtt Store
 import { storeToRefs } from "pinia";
+import Highcharts from "highcharts";
+import more from "highcharts/highcharts-more";
+import Exporting from "highcharts/modules/exporting";
+import { ref, reactive, watch, onMounted, onBeforeUnmount, computed, } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 const Mqtt = useMqttStore();
 const { payload, payloadTopic } = storeToRefs(Mqtt);
   
 // Highcharts, Load the exporting module and Initialize exporting module.
-import Highcharts from "highcharts";
-import more from "highcharts/highcharts-more";
-import Exporting from "highcharts/modules/exporting";
+
 Exporting(Highcharts);
 more(Highcharts);
-  
-import { ref, reactive, watch, onMounted, onBeforeUnmount, computed, } from "vue";
-import { useRoute, useRouter } from "vue-router";
   
 // VARIABLES
 const router        = useRouter();
@@ -116,6 +119,7 @@ const shift         = ref(false);
 const soil          = ref(null);
 const heatindex     = ref(null);
 const humidity      = ref(null);
+const altitudeUnit  = ref('m');
 var isActive        = ref(null);
 var radar           = ref(null);
 var fm              = new FluidMeter();
@@ -144,8 +148,8 @@ onBeforeUnmount(() => {
 
 
 // WATCHERS
-watch(Mqtt.newCardData, (data) => {
-    console.log(Mqtt.newCardData.value.temperature, data.timestamp);
+watch(Mqtt.cardData, (data) => {
+    console.log(Mqtt.cardData.value.temperature, data.timestamp);
     if (points.value > 0) {
         points.value--;
     } else {
@@ -155,8 +159,8 @@ watch(Mqtt.newCardData, (data) => {
 
     const currentTime = new Date().getTime();
 
-    console.log(Mqtt.newCardData.value.pressure);
-    const pressure = parseFloat(Mqtt.newCardData.value.pressure);
+    console.log(Mqtt.cardData.value.pressure);
+    const pressure = parseFloat(Mqtt.cardData.value.pressure);
 
     // Check if the value is a number before updating the gauge
     if (!isNaN(pressure)) {
@@ -164,8 +168,8 @@ watch(Mqtt.newCardData, (data) => {
     }
 
 
-    console.log(Mqtt.newCardData.value.altitude);
-    let altitudeValue = parseFloat(Mqtt.newCardData.value.altitude);
+    console.log(Mqtt.cardData.value.altitude);
+    let altitudeValue = parseFloat(Mqtt.cardData.value.altitude);
 
     // Check if the value is a number before updating the altitude
     if (!isNaN(altitudeValue)) {
@@ -174,8 +178,8 @@ watch(Mqtt.newCardData, (data) => {
     }
 
 
-    console.log(Mqtt.newCardData.value.heatindex);
-    let heatIndexValue = parseFloat(Mqtt.newCardData.value.heatindex);
+    console.log(Mqtt.cardData.value.heatindex);
+    let heatIndexValue = parseFloat(Mqtt.cardData.value.heatindex);
     // Check if the value is a number before updating the heat index
     if (!isNaN(heatIndexValue)) {
         heatindex.value = heatIndexValue;
@@ -183,8 +187,8 @@ watch(Mqtt.newCardData, (data) => {
     }
 
 
-    console.log(Mqtt.newCardData.value.humidity);
-    let humidityValue = parseFloat(Mqtt.newCardData.value.humidity);
+    console.log(Mqtt.cardData.value.humidity);
+    let humidityValue = parseFloat(Mqtt.cardData.value.humidity);
     // Check if the value is a number before updating the humidity
     if (!isNaN(humidityValue)) {
         humidity.value = humidityValue;
@@ -192,8 +196,8 @@ watch(Mqtt.newCardData, (data) => {
     }
 
 
-    console.log(Mqtt.newCardData.value.temperature);
-    let temperatureValue = parseFloat(Mqtt.newCardData.value.temperature);
+    console.log(Mqtt.cardData.value.temperature);
+    let temperatureValue = parseFloat(Mqtt.cardData.value.temperature);
     // Check if the value is a number before updating the temperature
     if (!isNaN(temperatureValue)) {
         temperature.value = temperatureValue;
@@ -201,8 +205,8 @@ watch(Mqtt.newCardData, (data) => {
     }
 
 
-    console.log(Mqtt.newCardData.value.soil);
-    let soilValue = parseFloat(Mqtt.newCardData.value.soil);
+    console.log(Mqtt.cardData.value.soil);
+    let soilValue = parseFloat(Mqtt.cardData.value.soil);
     // Check if the value is a number before updating the soil
     if (!isNaN(soilValue)) {
         // Calculate the soil moisture percentage
@@ -223,7 +227,7 @@ const CreateCharts = async () => {
         title: { text: "Pressure", align: "left" },
         yAxis: { 
             min: 0,
-            max: 100000,
+            max: 150000,
             tickPixelInterval: 72,
             tickPosition: "inside",
             tickColor: Highcharts.defaultOptions.chart.backgroundColor || "#FFFFFF",
@@ -235,7 +239,8 @@ const CreateCharts = async () => {
             plotBands: [
                 { from: 0, to: 20000, color: "#DF5353", thickness: 20 },
                 { from: 20000, to: 60000, color: "#DDDF0D", thickness: 20 },
-                { from: 60000, to: 100000, color: "#55BF3B", thickness: 20 },
+                { from: 60000, to: 120000, color: "#55BF3B", thickness: 20 },
+                { from: 120000, to: 150000, color: "#DF5353", thickness: 20 },
             ],
         },
         tooltip: { shared: true },
@@ -304,6 +309,27 @@ const CreateCharts = async () => {
 };
 </script>
 
+<script>
+export default {
+    data() {
+        return {
+            altitude: null,
+            altitudeUnit: 'm',
+        };
+    },
+    methods: {
+        convert() {
+            if (this.altitudeUnit === 'm') {
+                altitude.value = parseFloat((altitude.value * 3.281).toFixed(1)); // Use altitude.value instead of this.altitude
+                this.altitudeUnit = 'f';
+            } else {
+                altitude.value = parseFloat((altitude.value / 3.281).toFixed(1)); // Use altitude.value instead of this.altitude
+                this.altitudeUnit = 'm';
+            }
+        },
+    },
+};
+</script>
 
 <style scoped>
 /** CSS STYLE HERE */
@@ -343,6 +369,17 @@ figure {
 .humidity-img {
     background: url('../assets/humidity.jpg');
     background-size: cover;
+}
+
+.no-background {
+    background: none !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.button {
+    background-color: white;
 }
 
 </style>

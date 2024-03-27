@@ -1,59 +1,50 @@
 import { defineStore } from "pinia";
-import {ref , reactive} from 'vue'
-import mqtt from 'mqtt'
+import { ref, reactive } from 'vue';
+import mqtt from 'mqtt';
 
-export const useMqttStore = defineStore('mqtt_store', () => {
+export const useMqttStore = defineStore('mqttStore', () => {
+  const brokerUrl = 'ws://broker.emqx.io:8083/mqtt';
+  const mqttClient = ref(null);
+  const cardData = reactive({});
 
-    const url = 'ws://broker.emqx.io:8083/mqtt'
-    const client = ref(null);
-    const newCardData = reactive({})
+  const connectionOptions = {
+    clean: true,
+  };
 
-    const options = {
-        clean: true,
-      }
-
-
-    function disconnect(){
-        if(client.value!=null){
-            client.value.end()
+  function connect() {
+    console.log('Connecting...');
+    mqttClient.value = mqtt.connect(brokerUrl, connectionOptions);
+    mqttClient.value.on('connect', function () {
+      console.log('Connected');
+      mqttClient.value.subscribe('demo', function (err) {
+        if (!err) {
+          mqttClient.value.publish('demo', 'Hello mqtt');
         }
+      });
+    });
+
+    mqttClient.value.on('disconnect', function () {
+      console.log('Disconnected');
+    });
+
+    mqttClient.value.on('message', function (topic, message) {
+      console.log(message.toString());
+      if (topic == 'demo') {
+        try {
+          cardData.value = JSON.parse(message.toString());
+          console.log(cardData.value.temperature);
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    });
+  }
+
+  function disconnect() {
+    if (mqttClient.value != null) {
+      mqttClient.value.end();
     }
+  }
 
-    function connect(){
-        console.log('Connecting...')
-        client.value  = mqtt.connect(url, options)
-        client.value.on('connect', function () {
-            console.log('Connected')
-            // Subscribe to a topic
-            client.value.subscribe('demo', function (err) {
-              if (!err) {
-                // Publish a message to a topic
-                client.value.publish('demo', 'Hello mqtt')
-              }
-            })
-          
-          })
-
-          client.value.on('disconnect', function (packet) {
-            console.log('disconnected')
-          })
-        
-          client.value.on('message', function (topic, message) {
-            // message is Buffer
-            console.log(message.toString())
-            if(topic=='demo'){
-                try{
-                    newCardData.value = JSON.parse(message.toString())
-                    console.log(newCardData.value.temperature)
-                } catch (e){
-                    console.log(e)
-                }
-                
-            }
-          })
-          
-    }
-
-    // connect();
-    return { connect , newCardData , disconnect}
-  })
+  return { connect, cardData, disconnect };
+});

@@ -4,41 +4,57 @@
         <v-row>
             <!-- col 1 -->
             <v-col>
-                <v-text-field v-model="start" label="Start date" type="Date" dense solo-inverted class="mr-5" :style="{ maxWidth: '300px' }" flat></v-text-field>
-                <v-text-field v-model="end" label="End date" type="Date" dense solo-inverted :style="{ marginRight: '5px', maxWidth: '300px' }" flat></v-text-field>
-                <v-btn text="Analyze" @click=" updateCards(); updateLineChart();"></v-btn>
-                <br />
-                <br />
-                <br />
-            </v-col>
-
-            <!-- col 2 -->
-            <v-col>
-                <v-sheet width="200px">
-                    <v-card class="mb-5" style="max-width: 200px" color="surface" title="Average" subtitle="For the selected period">
-                        <span class="text-onSecondaryContainer text-h3">{{ reserve }}</span>Gal
-                    </v-card>
+                <v-sheet class="pd-2" height="250">
+                    <p>Enter date range for Analysis</p>
+                    <v-divider></v-divider>
+                    <v-text-field label="Start date" class="mr-5" type="Date" density="compact" variant="solo-inverted" flat style="max-width: 300px;" v-model="start"></v-text-field>
+                    <v-text-field label="End date" type="Date" density="compact" variant="solo-inverted" flat style="max-width: 300px;" v-model="end"></v-text-field>
+                    <v-spacer></v-spacer>
+                    <v-btn class="text-caption" text="Analyze" color="primary" variant="tonal" @click="updateLineCharts();updateCards();updateHistogramCharts();updateScatterCharts();"></v-btn>
                 </v-sheet>
             </v-col>
 
-            <!-- col 3 -->
-            <v-col></v-col>
         </v-row>
         
-        <!-- row 2 -->
-        <v-row>
-            <v-col>
+        <!-- ROW 2 -->
+        <v-row style="max-width: 1200px;">
+            <!-- COLUMN 1 -->
+            <v-col cols="12">
+                <figure class="highcharts-figure">
+                    <div id="container"></div>
+                </figure>
+            </v-col>
+            <!-- COLUMN 2 -->
+            <v-col cols="12">
                 <figure class="highcharts-figure">
                     <div id="container0"></div>
                 </figure>
             </v-col>
-        </v-row>
-
-        <!-- row 3 -->
-        <v-row>
-            <v-col>
+        </v-row> 
+        <!-- ROW 3 -->
+        <v-row style="max-width: 1200px;">
+            <!-- COLUMN 1 -->
+            <v-col style="border: 1;" cols="12">
                 <figure class="highcharts-figure">
                     <div id="container1"></div>
+                </figure>
+            </v-col>
+            <!-- COLUMN 2 -->
+            <v-col cols="12">
+                <figure class="highcharts-figure">
+                    <div id="container2"></div>
+                </figure>
+            </v-col>
+            <!-- COLUMN 3 -->
+            <v-col cols="12">
+                <figure class="highcharts-figure">
+                    <div id="container3"></div>
+                </figure>
+            </v-col>
+            <!-- COLUMN 3 -->
+            <v-col cols="12">
+                <figure class="highcharts-figure">
+                    <div id="container4"></div>
                 </figure>
             </v-col>
         </v-row>
@@ -73,6 +89,16 @@ const scatterChart  = ref(null);        // Scatter Chart object
 var start           = ref(null);
 var end             = ref(null);
 var reserve         = ref(null);
+var temperature     = ref(null);
+var humidity        = ref(null);
+var heatIndex       = ref(null);
+var scatter         = ref(null);
+var freqDistroChart = ref(null);
+var tempHiChart     = ref(null);
+var humiChart       = ref(null);
+var tempHiSChart    = ref(null);
+var humiHiSChart    = ref(null);
+
 
 onMounted(() => {
     // THIS FUNCTION IS CALLED AFTER THIS COMPONENT HAS BEEN MOUNTED
@@ -120,6 +146,165 @@ const CreateCharts = async () => {
                 color: Highcharts.getOptions().colors[0],
             },
         ],
+    });
+
+    tempHiChart.value = Highcharts.chart('container', {
+        chart: { zoomType: 'x' },
+        title: { text: 'Temperature & Heat Index Analysis', align: 'left' },
+        subtitle: { text: 'The heat index, also known as the "apparent temperature," is a measure that combines air temperature and \
+        relative humidity to assess how hot it feels to the human body. The relationship between heat index and air temperature is \
+        influenced by humidity levels. As humidity increases, the heat  index also rises, making the perceived temperature higher \
+        than the actual air temperature.', align: 'left'},
+        yAxis: {
+            title: { text: 'Air Temperature & Heat Index' , style:{color:'#000000'}},
+            labels: { format: '{value} °C' }
+        },
+        xAxis: {
+            type: 'datetime',
+            title: { text: 'Time', style:{color:'#000000'} },
+            //labels: { format: '{value} °C' }
+        },
+        tooltip: { 
+            shared:true,
+            pointFormat: 'Humidity: {point.x} % <br/> Temperature: {point.y} °C' },
+        series: [
+        {
+            name: 'Temperature',
+            type: 'spline',
+            data: [],
+            turboThreshold: 0,
+            color: Highcharts.getOptions().colors[0]
+        },
+        {
+            name: 'Heat Index',
+            type: 'spline',
+            data: [],
+            turboThreshold: 0,
+            color: Highcharts.getOptions().colors[1]
+        } ],
+    });
+    // HUMIDITY CHART
+    humiChart.value = Highcharts.chart('container4', {
+        chart: { zoomType: 'x' },
+        title: { text: 'Humidity Analysis', align: 'left' },
+        // subtitle: { text: 'Visualize the relationship between Temperature and Heat Index as well as revealing patterns or trends in the data'},
+        yAxis: {
+            title: { text: 'Air Temperature & Heat Index' , style:{color:'#000000'}},
+            labels: { format: '{value} %' }
+        },
+        xAxis: {
+            type: 'datetime',
+            title: { text: 'Time', style:{color:'#000000'} },
+            //labels: { format: '{value} °C' }
+        },
+        tooltip: { 
+            shared:true, 
+            pointFormat: 'Humidity: {point.x} % <br/> Temperature: {point.y} °C'
+        },
+        series: [
+        {
+            name: 'Humidity',
+            type: 'spline',
+            data: [],
+            turboThreshold: 0,
+            color: Highcharts.getOptions().colors[0]
+        }],
+    });
+    // FREQUENCY DISTRIBUTION CHART
+    freqDistroChart.value = Highcharts.chart('container1', {
+        chart: { zoomType: 'x' },
+        title: { text: 'Frequency Distribution Analysis', align: 'left' },
+        // subtitle: { text: 'Visualize the relationship between Temperature and Heat Index as well as revealing patterns or trends in the data'},
+        yAxis: {
+            title: { text: 'Frequency' , style:{color:'#000000'}},
+            labels: { format: '{value}' }
+        },
+        xAxis: {
+            //type: 'datetime',
+            title: { text: 'Values', style:{color:'#000000'} },
+            //labels: { format: '{value} °C' }
+        },
+        tooltip: { 
+            shared:true, 
+            //pointFormat: 'Humidity: {point.x} % <br/> Temperature: {point.y} °C'
+        },
+        series: [
+        {
+            name: 'Temperature',
+            type: 'column',
+            data: [],
+            turboThreshold: 0,
+            color: Highcharts.getOptions().colors[0]
+        },
+        {
+            name: 'Humidity',
+            type: 'column',
+            data: [],
+            turboThreshold: 0,
+            color: Highcharts.getOptions().colors[1]
+        },
+        {
+            name: 'Heat Index',
+            type: 'column',
+            data: [],
+            turboThreshold: 0,
+            color: Highcharts.getOptions().colors[2]
+        } ],
+    });
+    // TEMPERATURE AND HEAT INDEX SCATTER CHART
+    tempHiSChart.value = Highcharts.chart('container2', {
+        chart: { zoomType: 'x' },
+        title: { text: 'Temperature & Heat Index Correlation Analysis', align: 'left'},
+        subtitle: { text: 'Visualize the relationship between Temperature \
+        and Heat Index as well as revealing patterns or trends in the data', align: 'left'},
+        yAxis: {
+            title: { text: 'Heat Index' , style:{color:'#000000'}},
+            labels: { format: '{value} °C' }
+        },
+        xAxis: {
+            type: 'datetime',
+            title: { text: 'Temperature', style:{color:'#000000'} },
+            labels: { format: '{value} °C' }
+        },
+        tooltip: { 
+            shared:true, 
+            pointFormat: 'Temperature: {point.x} °C <br/> Heat Index: {point.y} °C' },
+        series: [
+        {
+            name: 'Analysis',
+            type: 'scatter',
+            data: [],
+            turboThreshold: 0,
+            color: Highcharts.getOptions().colors[0]
+        }]
+    });
+    // HUMIDITY AND HEAT INDEX SCATTER CHART
+    humiHiSChart.value = Highcharts.chart('container3', {
+        chart: { zoomType: 'x' },
+        title: { text: 'Humidity & Heat Index Correlation Analysis', align: 'left' },
+        subtitle: { text: 'Visualize the relationship between Humidity\
+         and Heat Index as well as revealing patterns or trends in the data', align: 'left'},
+        yAxis: {
+            title: { text: 'Heat Index' , style:{color:'#000000'}},
+            labels: { format: '{value} °C' }
+        },
+        xAxis: {
+            //type: 'datetime',
+            title: { text: 'Humidity', style:{color:'#000000'} },
+            labels: { format: '{value} %' }
+        },
+        tooltip: { 
+            shared:true, 
+            pointFormat: 'Humidity: {point.x} % <br/> Heat Index: {point.y} °C'
+        },
+        series: [
+        {
+            name: 'Analysis',
+            type: 'scatter',
+            data: [],
+            turboThreshold: 0,
+            color: Highcharts.getOptions().colors[1]
+        } ],
     });
   
 };

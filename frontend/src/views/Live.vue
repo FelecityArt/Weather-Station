@@ -63,8 +63,8 @@
   const shift = ref(false);
 
 // WATCHERS
-watch(Mqtt.newCardData, (data) => {
-  console.log(Mqtt.newCardData.value.temperature, data.timestamp);
+watch(Mqtt.cardData, (data) => {
+  console.log(Mqtt.cardData.value.temperature, data.timestamp);
   if (points.value > 0) {
     points.value--;
   } else {
@@ -75,7 +75,7 @@ watch(Mqtt.newCardData, (data) => {
 
   soilChart.value.series[0].addPoint(
     {
-      y: parseFloat(Mqtt.newCardData.value.soil),
+      y: parseFloat(Mqtt.cardData.value.soil),
       x: currentTime,
     },
     true,
@@ -84,7 +84,7 @@ watch(Mqtt.newCardData, (data) => {
 
   tempHiChart.value.series[0].addPoint(
     {
-      y: parseFloat(Mqtt.newCardData.value.temperature),
+      y: parseFloat(Mqtt.cardData.value.temperature),
       x: currentTime,
     },
     true,
@@ -93,16 +93,16 @@ watch(Mqtt.newCardData, (data) => {
 
   tempHiChart.value.series[1].addPoint(
     {
-      y: parseFloat(Mqtt.newCardData.value.heatindex),
+      y: parseFloat(Mqtt.cardData.value.heatindex),
       x: currentTime,
     },
     true,
     shift.value
   );
-  
+
   humiChart.value.series[0].addPoint(
     {
-      y: parseFloat(Mqtt.newCardData.value.humidity),
+      y: parseFloat(Mqtt.cardData.value.humidity),
       x: currentTime,
     },
     true,

@@ -26,6 +26,14 @@
                             <v-spacer></v-spacer>
                             <div class="display-1" v-text="`${temperature}°C`"></div>
                         </v-card-text>
+                            <v-card-item>
+                                <v-select 
+                                v-model="tempUnit"
+                                :items="['°C', '°F']"
+                                label="Unit"
+                            ></v-select>
+                            </v-card-item>
+                            <v-btn color="primary" class="button" @click="convert">Convert</v-btn>
                     </v-card>
                 </v-col>
 
@@ -112,7 +120,7 @@ const route         = useRoute();
 const areaGraph     = ref(null);    // areaGraph object
 const altitude      = ref(0);
 const pressureGauge = ref(null); 
-const temperature   = ref(null);
+const temperature   = ref(0);
 const percentage    = ref(null);
 const points        = ref(600);
 const shift         = ref(false);
@@ -123,6 +131,8 @@ const altitudeUnit  = ref('m');
 var isActive        = ref(null);
 var radar           = ref(null);
 var fm              = new FluidMeter();
+
+const tempUnit = ref('°C');
 
 defineExpose({
   altitude
@@ -157,6 +167,7 @@ watch(Mqtt.cardData, (data) => {
     }
 
 
+    
     const currentTime = new Date().getTime();
 
     console.log(Mqtt.cardData.value.pressure);
@@ -215,6 +226,15 @@ watch(Mqtt.cardData, (data) => {
         console.log('Updated soil:', soil.value);
         // Update the fillPercentage property of the FluidMeter object
         fm.setPercentage(soil.value);
+    }
+});
+
+watch(tempUnit, (value) => {
+    console.log('Temp unit:', value);
+    if (value === '°C') {
+        temperature.value = parseFloat((temperature.value - 32) / 1.8).toFixed(2);
+    } else {
+        temperature.value = parseFloat((temperature.value * 1.8 + 32).toFixed(2));
     }
 });
 
@@ -310,25 +330,14 @@ const CreateCharts = async () => {
 </script>
 
 <script>
-export default {
-    data() {
-        return {
-            altitude: null,
-            altitudeUnit: 'm',
-        };
-    },
-    methods: {
-        convert() {
-            if (this.altitudeUnit === 'm') {
-                altitude.value = parseFloat((altitude.value * 3.281).toFixed(1)); // Use altitude.value instead of this.altitude
-                this.altitudeUnit = 'f';
-            } else {
-                altitude.value = parseFloat((altitude.value / 3.281).toFixed(1)); // Use altitude.value instead of this.altitude
-                this.altitudeUnit = 'm';
-            }
-        },
-    },
-};
+
+// temperature.value = computed(() => {
+//     if (tempUnit.value === '°C') {
+//         return temperature.value;
+//     } else {
+//         return parseFloat((temperature.value * 1.8 + 32).toFixed(2));
+//     }
+// });
 </script>
 
 <style scoped>

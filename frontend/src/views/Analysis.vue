@@ -69,6 +69,8 @@ import Exporting from "highcharts/modules/exporting";
 import { withDirectives } from "vue";
 Exporting(Highcharts);
 more(Highcharts);
+
+
   
 // IMPORTS
  
@@ -94,10 +96,13 @@ var humidity        = ref(null);
 var heatIndex       = ref(null);
 var scatter         = ref(null);
 var freqDistroChart = ref(null);
+var soil            = ref(null);
 var tempHiChart     = ref(null);
 var humiChart       = ref(null);
 var tempHiSChart    = ref(null);
 var humiHiSChart    = ref(null);
+
+
 
 
 onMounted(() => {

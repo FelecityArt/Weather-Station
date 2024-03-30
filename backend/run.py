@@ -1,9 +1,10 @@
-from flask import Flask
+from flask import Flask, jsonify, request
 from pymongo import MongoClient
 import paho.mqtt.client as mqtt
 import json
 import threading
 from datetime import datetime
+from bson.json_util import dumps
 
 app = Flask(__name__)
 
@@ -40,7 +41,7 @@ def on_message(client, userdata, msg):
 client = mqtt.Client(client_id="620151149")
 client.on_message = on_message
 
-client.connect("test.mosquitto.org", 1883, 60)  # Connect to the MQTT broker
+client.connect("broker.emqx.io", 1883, 60)  # Connect to the MQTT broker
 
 # Subscribe to the topic where the Arduino is publishing the data
 client.subscribe("demo")
@@ -49,5 +50,19 @@ client.subscribe("demo")
 # Other loop*() functions are available that give a threaded interface and a manual interface.
 client.loop_start()
 
+@app.route('/api/data', methods=['GET'])
+def get_data():
+    start = request.args.get('start')
+    end = request.args.get('end')
+    if start is None or end is None:
+        return jsonify({'status': 'error', 'message': 'Missing start or end parameter'}), 400
+    start = datetime.strptime(start, '%Y-%m-%d')
+    end = datetime.strptime(end, '%Y-%m-%d')
+    data = list(collection.find({'timestamp': {'$gte': start, '$lte': end}}))
+    return jsonify({'status': 'success', 'data': json.loads(dumps(data))}), 200
+
 if __name__ == "__main__":
-    app.run()
+    app.run(host="0.0.0.0")
+
+# create a new route that will return all the data from the MongoDB database.
+

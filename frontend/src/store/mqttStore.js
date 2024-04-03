@@ -30,14 +30,26 @@ export const useMqttStore = defineStore('mqttStore', () => {
     mqttClient.value.on('message', function (topic, message) {
       console.log(message.toString());
       if (topic == 'demo') {
+        const msg = message.toString();
         try {
-          cardData.value = JSON.parse(message.toString());
-          console.log(cardData.value.temperature);
+          if (IsJsonString(msg)) {
+            cardData.value = JSON.parse(msg);
+            console.log(cardData.value.temperature);
+          }
         } catch (error) {
           console.log(error);
         }
       }
     });
+    
+    function IsJsonString(str) {
+      try {
+        JSON.parse(str);
+      } catch (e) {
+        return false;
+      }
+      return true;
+    }
   }
 
   function disconnect() {

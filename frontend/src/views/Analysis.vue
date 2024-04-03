@@ -10,7 +10,7 @@
                     <v-text-field label="Start date" class="mr-5" type="Date" density="compact" variant="solo-inverted" flat style="max-width: 300px;" v-model="start"></v-text-field>
                     <v-text-field label="End date" type="Date" density="compact" variant="solo-inverted" flat style="max-width: 300px;" v-model="end"></v-text-field>
                     <v-spacer></v-spacer>
-                    <v-btn class="text-caption" text="Analyze" color="primary" variant="tonal" @click="updateLineCharts();updateCards();updateHistogramCharts();updateScatterCharts();"></v-btn>
+                    <v-btn class="text-caption" text="Analyze" color="primary" variant="tonal" @click="updateLineChart()"></v-btn>
                 </v-sheet>
             </v-col>
 
@@ -80,6 +80,7 @@ import { storeToRefs } from "pinia";
 import { useAppStore } from "@/store/appStore";
 import { ref, reactive, watch, onMounted, onBeforeUnmount, computed, } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import App from "@/App.vue";
   
 // VARIABLES
 const router        = useRouter();
@@ -121,6 +122,21 @@ onBeforeUnmount(() => {
     // THIS FUNCTION IS CALLED RIGHT BEFORE THIS COMPONENT IS UNMOUNTED
     // Mqtt.unsubcribeAll();
 });
+
+
+watch(start, (newVal, oldVal) => {
+    const timestamp = new Date(newVal).getTime();
+    console.log(start.value)
+    console.log("Start Date (Timestamp): ", timestamp);
+});
+    
+
+// watch((AppStore.alldata), (oldVal,newVal) => {
+//     console.log("Data: ", newVal.length);
+// });
+//     console.log("Start Date: ", newVal);
+// });
+
 
 const CreateCharts = async () => {
     // LINE CHART FOR RESERVE VARIABLE
@@ -171,7 +187,7 @@ const CreateCharts = async () => {
         },
         tooltip: { 
             shared:true,
-            pointFormat: 'Humidity: {point.x} % <br/> Temperature: {point.y} °C' },
+            pointFormat: 'Humidity: {point.y} % <br/> Temperature: {point.y} °C' },
         series: [
         {
             name: 'Temperature',
@@ -194,7 +210,7 @@ const CreateCharts = async () => {
         title: { text: 'Humidity Analysis', align: 'left' },
         // subtitle: { text: 'Visualize the relationship between Temperature and Heat Index as well as revealing patterns or trends in the data'},
         yAxis: {
-            title: { text: 'Air Temperature & Heat Index' , style:{color:'#000000'}},
+            title: { text: 'Humidity' , style:{color:'#000000'}},
             labels: { format: '{value} %' }
         },
         xAxis: {
@@ -204,7 +220,7 @@ const CreateCharts = async () => {
         },
         tooltip: { 
             shared:true, 
-            pointFormat: 'Humidity: {point.x} % <br/> Temperature: {point.y} °C'
+            pointFormat: 'Humidity: {point.x} °C'
         },
         series: [
         {
@@ -300,16 +316,28 @@ const CreateCharts = async () => {
         },
         tooltip: { 
             shared:true, 
-            pointFormat: 'Humidity: {point.x} % <br/> Heat Index: {point.y} °C'
+            pointFormat: 'Humidity: {point.x} % <br/> Heat Index: {point.x} °C'
         },
         series: [
         {
-            name: 'Analysis',
+            name: 'Humidity',
             type: 'scatter',
             data: [],
             turboThreshold: 0,
             color: Highcharts.getOptions().colors[1]
-        } ],
+        } ,
+        {
+            name: 'Heat index',
+            type: 'scatter',
+            data: [],
+            turboThreshold: 0,
+            color: Highcharts.getOptions().colors[1]
+        } ,
+        
+    
+    
+    ],
+        
     });
   
 };
@@ -329,30 +357,68 @@ const updateCards = async () => {
   
 const updateLineChart = async () => {
     if (!!start.value && !!end.value) {
+        console.log("funcyion called");
         // Convert output from Textfield components to 10 digit timestamps
-        let startDate = new Date(start.value).getTime() / 1000;
-        let endDate = new Date(end.value).getTime() / 1000;
+        let startDate = new Date(start.value).getTime();
+        let endDate = new Date(end.value).getTime();
         // Fetch data from backend
-        const data = await AppStore.getReserve(startDate, endDate);
+        const data = await AppStore.update_Card(startDate, endDate);
+        console.log(data);
         // Create arrays for each plot
         let reserve = [];
+        let heatarray = [];
+        let heatindexarray = [];
         let scatter = [];
+        let soil = [];
         // Iterate through data variable and transform object to format recognized by highcharts
         data.forEach((row) => {
-        reserve.push({
+            if(row.temperature!=null && row.timestamp!=null && row.humidity!=null && row.heatindex!=null && row.soil!=null){
+                reserve.push({
             x: row.timestamp * 1000,
-            y: parseFloat(row.reserve.toFixed(2)),
+            y: parseFloat(row.temperature.toFixed(2)),
         });
+        heatarray.push({
+            x: row.timestamp * 1000,
+            y: parseFloat(row.heatindex.toFixed(2)),
         });
-        data.forEach((row) => {
+        heatindexarray.push({
+            x: row.timestamp * 1000,
+            y: parseFloat(row.humidity.toFixed(2)),
+        });
+
+        soil.push({
+            x: row.timestamp * 1000,
+            y: parseFloat(row.soil.toFixed(2)),
+        });
         scatter.push({
-            x: parseFloat(row.waterheight.toFixed(2)),
-            y: parseFloat(row.radar.toFixed(2)),
+            x: row.timestamp * 1000,
+            y: parseFloat(row.heatindex.toFixed(2)),
         });
+
+            }
+        
         });
+        // data.forEach((row) => {
+        // scatter.push({
+        //     x: parseFloat(row.waterheight.toFixed(2)),
+        //     y: parseFloat(row.radar.toFixed(2)),
+        // });
+        // });
         // Add data to line and scatter chart
-        lineChart.value.series[0].setData(reserve);
-        scatterChart.value.series[0].setData(scatter);
+        // lineChart.value.series[0].setData(reserve);
+        // scatterChart.value.series[0].setData(scatter);
+        tempHiChart.value.series[0].setData(reserve);
+        tempHiChart.value.series[1].setData(heatarray);
+        tempHiSChart.value.series[0].setData(heatindexarray);
+        lineChart.value.series[0].setData(soil);
+        humiChart.value.series[0].setData(scatter);
+        freqDistroChart.value.series[0].setData(reserve);
+        freqDistroChart.value.series[1].setData(heatindexarray);
+        freqDistroChart.value.series[2].setData(heatarray)
+        humiHiSChart.value.series[0].setData(heatarray)
+        humiHiSChart.value.series[1].setData(heatindexarray)
+
+
     }
 };
 </script>

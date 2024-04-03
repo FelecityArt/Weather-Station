@@ -9,7 +9,11 @@ export const useAppStore =  defineStore('app', ()=>{
     ref() s become state properties
     computed() s become getters
     function() s become actions  
+
+
     */
+
+    const alldata = ref([])
 
     const setPasscode = async (passcode) => {
         // FETCH REQUEST WILL TIMEOUT AFTER 20 SECONDS
@@ -54,16 +58,20 @@ export const useAppStore =  defineStore('app', ()=>{
         const controller = new AbortController();
         const signal = controller.signal;
         const id = setTimeout(() => { controller.abort() }, 60000);
-        const URL = `/api/avg/${start}/${end}`;
+        console.log(start, end);
+        const URL = `/api/data/${start/1000}/${end/1000}`;
         try {
             const response = await fetch(URL, { method: 'GET', signal: signal });
             if (response.ok) {
                 const data = await response.json();
                 let keys = Object.keys(data);
                 if (keys.includes("status")) {
-                    if (data["status"] == "found") {
-                        console.log(data["data"]);
+                    if (data["status"] == "success") {
+                        // console.log(data["data"]);
+                        alldata.value=data["data"];
                         return data["data"];
+                        // console.log("Hello World")
+                        // console.log(alldata.value.length)
                     }
                     if (data["status"] == "failed"
                     ) {
@@ -103,6 +111,8 @@ export const useAppStore =  defineStore('app', ()=>{
                     ) {
                         console.log("getReserve returned no data");
                     }
+                }else{
+                    console.log("h")
                 }
             }
             else {
@@ -129,6 +139,7 @@ export const useAppStore =  defineStore('app', ()=>{
         // EXPORTS	
         setPasscode,
         update_Card,
-        getReserve 
+        getReserve ,
+        alldata
     }
 },{ persist: true  });

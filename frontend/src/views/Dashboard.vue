@@ -13,7 +13,11 @@
                         <v-slider class="altitude-img" direction="vertical" v-model="altitude" :max="altitudeUnit === 'm' ? 1000 : 3280" :min="0" step="1" thumb-label="always" color="white" :label="`Altitude (${altitudeUnit})`" track-size="60"></v-slider>
                     </v-sheet>
                     <v-card-actions class="no-background">
-                        <v-btn color="primary" class="button" theme="dark" @click="convert">Convert</v-btn>
+                        <v-select
+                        v-model="altitudeUnit"
+                        :items="['m', 'ft']"
+                        :item-text="itemText"
+                        ></v-select>
                     </v-card-actions>
                     </v-card>
                 </v-col>
@@ -24,16 +28,16 @@
                             <v-icon left>mdi-thermometer</v-icon>
                             Temperature
                             <v-spacer></v-spacer>
-                            <div class="display-1" v-text="`${temperature}°C`"></div>
+                            <div class="display-1" v-text="`${temperature}`"></div>
                         </v-card-text>
-                            <v-card-item>
-                                <v-select 
-                                v-model="tempUnit"
-                                :items="['°C', '°F']"
-                                label="Unit"
+                        <v-card-item>
+                            <v-select 
+                            v-model="tempUnit"
+                            :items="['°C', '°F']"
+                            :item-text="itemText"
                             ></v-select>
-                            </v-card-item>
-                            <v-btn color="primary" class="button" @click="convert">Convert</v-btn>
+                            <div class="display-1" v-text="`${temperature}${tempUnit}`"></div>
+                        </v-card-item>
                     </v-card>
                 </v-col>
 
@@ -43,8 +47,13 @@
                             <v-icon left>mdi-thermometer-alert</v-icon>
                             Heat Index
                             <v-spacer></v-spacer>
-                            <div class="display-2" v-text="`${heatindex}°C`"></div>
+                            <div class="display-2" v-text="`${heatindex}`"></div>
                         </v-card-text>
+                        <v-select 
+                        v-model="heatUnit"
+                        :items="['°C', '°F']"
+                        :item-text="itemText"
+                        ></v-select>
                     </v-card>
                 </v-col>
 
@@ -120,7 +129,6 @@ const route         = useRoute();
 const areaGraph     = ref(null);    // areaGraph object
 const altitude      = ref(0);
 const pressureGauge = ref(null); 
-const temperature   = ref(0);
 const percentage    = ref(null);
 const points        = ref(600);
 const shift         = ref(false);
@@ -131,8 +139,6 @@ const altitudeUnit  = ref('m');
 var isActive        = ref(null);
 var radar           = ref(null);
 var fm              = new FluidMeter();
-
-const tempUnit = ref('°C');
 
 defineExpose({
   altitude
@@ -229,6 +235,10 @@ watch(Mqtt.cardData, (data) => {
     }
 });
 
+const tempUnit = ref('°C')
+const heatUnit = ref('°C')
+const temperature = ref(0) // initial temperature in Celsius
+
 watch(tempUnit, (value) => {
     console.log('Temp unit:', value);
     if (value === '°C') {
@@ -237,6 +247,28 @@ watch(tempUnit, (value) => {
         temperature.value = parseFloat((temperature.value * 1.8 + 32).toFixed(2));
     }
 });
+
+watch(heatUnit, (value) => {
+    console.log('Heat unit:', value);
+    if (value === '°C') {
+        heatindex.value = parseFloat((heatindex.value - 32) / 1.8).toFixed(2);
+    } else {
+        heatindex.value = parseFloat((heatindex.value * 1.8 + 32).toFixed(2));
+    }
+});
+
+watch(altitudeUnit, (value) => {
+    console.log('Altitude unit:', value);
+    if (value === 'm') {
+        altitude.value = parseFloat(altitude.value / 3.28084).toFixed(2);
+    } else {
+        altitude.value = parseFloat(altitude.value * 3.28084).toFixed(2);
+    }
+});
+
+const itemText = (item) => {
+    return item === '°C' ? '°C' : '°F';
+};
 
 // FUNCTIONS
 const CreateCharts = async () => {
